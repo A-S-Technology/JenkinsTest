@@ -58,44 +58,63 @@ pipeline {
     
     post {
         always {
-            echo "============Build Summary==============="
-            junit testResults: 'test-results.xml', allowEmptyResults: true, skipPublishingChecks: true
-
-            // Archive Coverage Report
-            publishHTML([
-                reportDir: 'htmlcov',
-                reportFiles: 'index.html',
-                reportName: 'Code Coverage Report',
-                keepAll: true,
-                alwaysLinkToLastBuild: true
-            ])
-            archiveArtifacts artifacts: 'pylint-report.txt', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
+            echo "========== BUILD SUMMARY =========="
+            
+            // Archive test results
+            junit testResults: 'test-results.xml', allowEmptyResults: true
+            
+            // Archive all reports
+            archiveArtifacts artifacts: 'test-results.xml,coverage.xml,pylint-report.txt,htmlcov/**', 
+                            allowEmptyArchive: true
+            
+            // Display test summary
             sh '''
-            if [ -f test-results.xml ]; then
-                echo "✓ Test results saved: test-results.xml"
-            fi
+                echo ""
+                echo "========== TEST RESULTS =========="
+                if [ -f test-results.xml ]; then
+                    echo "✓ Test results: test-results.xml"
+                    grep -o 'tests="[^"]*"' test-results.xml || echo "No test count found"
+                fi
+            '''
             
-            if [ -f coverage.xml ]; then
-                
-                grep -o 'lines-valid="[^"]*"' coverage.xml || true
-                grep -o 'lines-covered="[^"]*"' coverage.xml || true
-            fi
+            // Display coverage summary
+            sh '''
+                . ${VENV_DIR}/bin/activate
+                echo ""
+                echo "========== COVERAGE SUMMARY =========="
+                coverage report || true
+            '''
             
-            if [ -f pylint-report.txt ]; then
-                echo "✓ Linting report saved"
-                wc -l pylint-report.txt
-            fi
-        '''
+            // Display lint summary
+            sh '''
+                echo ""
+                echo "========== LINT REPORT =========="
+                if [ -f pylint-report.txt ]; then
+                    echo "✓ Pylint issues found: $(wc -l < pylint-report.txt) lines"
+                    echo "First 10 issues:"
+                    head -10 pylint-report.txt || true
+                fi
+            '''
+            
+            echo "========== ARTIFACTS SAVED =========="
+            echo "Coverage Report: htmlcov/index.html"
+            echo "Test Results: test-results.xml"
+            echo "Coverage Data: coverage.xml"
+            echo "Lint Report: pylint-report.txt"
+            
+            cleanWs()
         }
         success {
-            echo "✓ Tests passed!"
+            echo ""
+            echo "========== BUILD SUCCESSFUL =========="
+            echo "✓ All tests passed!"
+            echo "✓ Check Artifacts tab for reports"
         }
         failure {
-            echo "✗ Tests failed!"
-        }
-        cleanup {
-            cleanWs()
+            echo ""
+            echo "========== BUILD FAILED =========="
+            echo "✗ Tests failed - check logs above"
+            echo "✗ See Artifacts tab for detailed reports"
         }
     }
 }
