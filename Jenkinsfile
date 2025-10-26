@@ -77,7 +77,7 @@ pipeline {
             fi
             
             if [ -f coverage.xml ]; then
-                echo "✓ Coverage report saved"
+                
                 grep -o 'lines-valid="[^"]*"' coverage.xml || true
                 grep -o 'lines-covered="[^"]*"' coverage.xml || true
             fi
