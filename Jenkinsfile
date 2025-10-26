@@ -69,9 +69,8 @@ pipeline {
                 keepAll: true,
                 alwaysLinkToLastBuild: true
             ])
-            archiveArtifacts artifacts: '**/*.xml,**/*.txt,htmlcov/**', 
-                         allowEmptyArchive: true,
-                         fingerprint: true
+            archiveArtifacts artifacts: 'pylint-report.txt', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
             sh '''
             if [ -f test-results.xml ]; then
                 echo "✓ Test results saved: test-results.xml"
