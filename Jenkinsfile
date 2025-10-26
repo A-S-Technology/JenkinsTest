@@ -40,7 +40,7 @@ pipeline {
                 sh '''
                     . ${VENV_DIR}/bin/activate
                     echo "Running pylint..."
-                    pylint src/ --exit-zero --format=parseable > pylint-report.txt || true
+                    pylint src/ --output-format=parseable > pylint-report.txt || true
                 '''
             }
         }
@@ -50,7 +50,7 @@ pipeline {
                 sh '''
                     . ${VENV_DIR}/bin/activate
                     echo "Running pytest..."
-                    pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+                    PYTHONPATH=${WORKSPACE}:${PYTHONPATH} pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
                 '''
             }
         }
