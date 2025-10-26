@@ -58,7 +58,35 @@ pipeline {
     
     post {
         always {
-            echo "Build completed"
+            echo "============Build Summary==============="
+            junit testResults: 'test-results.xml', allowEmptyResults: true, skipPublishingChecks: true
+
+            // Archive Coverage Report
+            publishHTML([
+                reportDir: 'htmlcov',
+                reportFiles: 'index.html',
+                reportName: 'Code Coverage Report',
+                keepAll: true,
+                alwaysLinkToLastBuild: true
+            ])
+            archiveArtifacts artifacts: 'pylint-report.txt', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'coverage.xml', allowEmptyArchive: true
+            sh '''
+            if [ -f test-results.xml ]; then
+                echo "✓ Test results saved: test-results.xml"
+            fi
+            
+            if [ -f coverage.xml ]; then
+                echo "✓ Coverage report saved"
+                grep -o 'lines-valid="[^"]*"' coverage.xml || true
+                grep -o 'lines-covered="[^"]*"' coverage.xml || true
+            fi
+            
+            if [ -f pylint-report.txt ]; then
+                echo "✓ Linting report saved"
+                wc -l pylint-report.txt
+            fi
+        '''
         }
         success {
             echo "✓ Tests passed!"
